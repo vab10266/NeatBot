@@ -18,7 +18,7 @@ class sc2Gym():
             bot = GenProtBot(genome_id, net)
             bots[genome_id] = bot
         return bots
-    def spendingGame():
+    def spending_game():
         bot_pop = get_bots()
         tested_bots = {}
         while bot_pop:
@@ -33,8 +33,8 @@ class sc2Gym():
             ], realtime=False)
             a_score = bot_a.score
             b_score = bot_b.score
-            self.genomes[opp_ids[0]].fitness = a_score.spent_minerals() + a_score.spent_vespene() + a_score.killed_minerals_army() + a_score.killed_minerals_economy()
-            self.genomes[opp_ids[1]].fitness = b_score.spent_minerals() + b_score.spent_vespene() + b_score.killed_minerals_army() + b_score.killed_minerals_economy()
+            self.genomes[opp_ids[0]].fitness = a_score.spent_minerals() + a_score.spent_vespene() + a_score.killed_minerals_army() + a_score.killed_minerals_economy() + a_score.killed_vespene_army() + a_score.killed_vespene_economy()
+            self.genomes[opp_ids[1]].fitness = b_score.spent_minerals() + b_score.spent_vespene() + b_score.killed_minerals_army() + b_score.killed_minerals_economy() + b_score.killed_vespene_army() + b_score.killed_vespene_economy()
         return self.genomes
 
 

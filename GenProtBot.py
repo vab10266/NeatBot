@@ -13,6 +13,7 @@ class GenProtBot(sc2.BotAI):
         self.main_net = main_net
         self.last_chosen = 0
         self.base_attacked = False
+        #6 out
         self.funcs = [self.build_econ(), self.build_army(), self.attack(), self.defend(), self.research(), self.expand_supply()]
         self.upgrades = {'gw':0, 'gd':0, 's':0, 'aw':0, 'ad':0}
 
@@ -192,6 +193,7 @@ class GenProtBot(sc2.BotAI):
                     self.base_attacked = True
                     break
         #run nn
+        #8 in
         input_arr = (self.time, self.minerals, self.vespene, len(self.workers),
             self.supply_used-len(self.workers), self.supply_left,
             self.last_chosen, self.base_attacked)

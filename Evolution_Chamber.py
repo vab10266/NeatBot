@@ -7,20 +7,13 @@ import os
 import neat
 import visualize
 import sc2
-
-# 2-input XOR inputs and expected outputs.
-xor_inputs =  [(0.0, 0.0, 0.0), (0.0, 1.0, 0.0), (1.0, 0.0, 0.0), (1.0, 1.0, 0.0), (0.0, 0.0, 1.0), (0.0, 1.0, 1.0), (1.0, 0.0, 1.0), (1.0, 1.0, 1.0)]
-xor_outputs = [(0.0, 0.0, 0.0), (1.0, 1.0, 0.0), (1.0, 0.0, 1.0), (0.0, 1.0, 1.0), (0.0, 1.0, 1.0), (1.0, 0.0, 1.0), (1.0, 1.0, 0.0), (0.0, 0.0, 0.0)]
-
+import sc2Gym
 
 def eval_genomes(genomes, config):
+    gym = sc2Gym(genomes, config)
+    results = gym.spending_game()
     for genome_id, genome in genomes:
-        genome.fitness = 24.0
-        net = neat.nn.FeedForwardNetwork.create(genome, config)
-        for xi, xo in zip(xor_inputs, xor_outputs):
-            output = net.activate(xi)
-            for i in range(3):
-                genome.fitness -= (output[i] - xo[i]) ** 2
+        genome.fitness = results[genome_id].fitness
 
 
 def run(config_file):
@@ -39,7 +32,7 @@ def run(config_file):
     p.add_reporter(neat.Checkpointer(5))
 
     # Run for up to 300 generations.
-    winner = p.run(eval_genomes, 900)
+    winner = p.run(eval_genomes, 100)
 
     # Display the winning genome.
     print('\nBest genome:\n{!s}'.format(winner))
