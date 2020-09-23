@@ -6,7 +6,8 @@ from sc2.unit_command import UnitCommand
 import random
 
 class GenProtBot(sc2.BotAI):
-    def __init__(self, main_net):
+    def __init__(self, bot_id, main_net):
+        self.id = bot_id
         self.ITERATIONS_PER_MINUTE = 165
         self.MAX_WORKERS = 50
         self.main_net = main_net
@@ -180,6 +181,7 @@ class GenProtBot(sc2.BotAI):
 
     async def on_step(self, iteration):
         self.iteration = iteration
+        self.score = self.state.score
         await self.distribute_workers()
         #set base_attacked
         self.base_attacked = False
