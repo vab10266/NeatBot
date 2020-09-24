@@ -14,16 +14,17 @@ class GenProtBot(sc2.BotAI):
         self.last_chosen = 0
         self.base_attacked = False
         #6 out
-        self.funcs = [self.build_econ(), self.build_army(), self.attack(), self.defend(), self.research(), self.expand_supply()]
+        self.funcs = [self.build_econ, self.build_army, self.attack, self.defend, self.research, self.expand_supply]
         self.upgrades = {'gw':0, 'gd':0, 's':0, 'aw':0, 'ad':0}
 
 
     async def build_econ(self):
+        if self.iteration == 0:
+            print('econ')
         #build probes
-        if (len(self.units(NEXUS)) * 16) > len(self.units(PROBE)) and len(self.units(PROBE)) < self.MAX_WORKERS:
+        if (len(self.units(NEXUS)) * 16) > len(self.units(PROBE)) and len(self.units(PROBE)) < self.MAX_WORKERS and self.can_afford(PROBE):
             for nexus in self.units(NEXUS).ready.noqueue:
-                if self.can_afford(PROBE):
-                    await self.do(nexus.train(PROBE))
+                await self.do(nexus.train(PROBE))
         #build assimilators
         for nexus in self.units(NEXUS).ready:
             vespenes = self.state.vespene_geyser.closer_than(15.0, nexus)
@@ -36,9 +37,11 @@ class GenProtBot(sc2.BotAI):
                         break
                     await self.do(worker.build(ASSIMILATOR, vespene))
         #build nexus
-        if self.units(NEXUS).amount < (self.iteration / self.ITERATIONS_PER_MINUTE) and self.can_afford(NEXUS):
+        if self.units(NEXUS).amount < self.time/30 and self.can_afford(NEXUS):
             await self.expand_now()
     async def build_army(self):
+        if self.iteration == 0:
+            print('army')
         #buildings
         if self.units(PYLON).ready.exists:
             pylon = self.units(PYLON).ready.random
@@ -57,6 +60,10 @@ class GenProtBot(sc2.BotAI):
                     if self.can_afford(STARGATE) and not self.already_pending(STARGATE):
                         if (len(self.units(STARGATE).ready.noqueue) == 0 or len(self.units(STARGATE)) == 0):
                             await self.build(STARGATE, near=pylon)
+        elif not self.already_pending(FORGE) and self.can_afford(FORGE):
+            nexuses = self.units(NEXUS).ready
+            if nexuses.exists:
+                await self.build(PYLON, near=nexuses.first)
         en_start = self.enemy_start_locations[0]
         clo_nex = self.units(NEXUS).closest_to(en_start).position
 
@@ -79,6 +86,8 @@ class GenProtBot(sc2.BotAI):
         else:
             return self.enemy_start_locations[0]
     async def attack(self):
+        if self.iteration == 0:
+            print('atk')
         en_start = self.enemy_start_locations[0]
         clo_nex = self.units(NEXUS).closest_to(en_start).position
 
@@ -87,6 +96,8 @@ class GenProtBot(sc2.BotAI):
             for s in self.units(UNIT).idle:
                 await self.do(s.attack(self.find_target(self.state)))
     async def defend(self):
+        if self.iteration == 0:
+            print('def')
         aggressive_units = (STALKER, VOIDRAY)
         for UNIT in aggressive_units:
             if len(self.known_enemy_units) > 0:
@@ -96,6 +107,8 @@ class GenProtBot(sc2.BotAI):
                 for s in self.units(UNIT).idle:
                     await self.do(s.move(clo_nex))
     async def research(self):
+        if self.iteration == 0:
+            print('research')
         #need forge
         if len(self.units(FORGE)) == 0 and not self.already_pending(FORGE) and self.can_afford(FORGE):
                 nexuses = self.units(NEXUS).ready
@@ -112,6 +125,11 @@ class GenProtBot(sc2.BotAI):
             elif self.upgrades['gd'] == 0 and self.can_afford(PROTOSSGROUNDARMORSLEVEL1):
                 self.units(FORGE).research(PROTOSSGROUNDARMORSLEVEL1)
                 self.upgrades['gd'] = 1
+        #need gateway for cc
+        elif len(self.units(GATEWAY)) == 0 and not self.already_pending(GATEWAY) and self.can_afford(GATEWAY):
+            nexuses = self.units(NEXUS).ready
+            if nexuses.exists:
+                await self.build(GATEWAY, near=nexuses.first)
         #need cyber core
         elif len(self.units(CYBERNETICSCORE)) == 0 and len(self.units(GATEWAY).ready) != 0 and not self.already_pending(CYBERNETICSCORE) and self.can_afford(CYBERNETICSCORE):
                 nexuses = self.units(NEXUS).ready
@@ -174,6 +192,8 @@ class GenProtBot(sc2.BotAI):
                 self.units(FORGE).research(PROTOSSGROUNDARMORSLEVEL3)
                 self.upgrades['gd'] = 3
     async def expand_supply(self):
+        if self.iteration == 0:
+            print('supply')
         if not self.already_pending(PYLON):
             nexuses = self.units(NEXUS).ready
             if nexuses.exists:
@@ -197,16 +217,20 @@ class GenProtBot(sc2.BotAI):
         input_arr = (self.time, self.minerals, self.vespene, len(self.workers),
             self.supply_used-len(self.workers), self.supply_left,
             self.last_chosen, self.base_attacked)
-        output_arr = net.activate(input_arr)
+        output_arr = self.main_net.activate(input_arr)
         #softmax
         total = sum(output_arr)
-        for i in output_arr:
+        for i in range(len(output_arr)):
             output_arr[i] /= total
         #argmax
         f = lambda i: output_arr[i]
         self.last_chosen = max(range(len(output_arr)), key=f)
         #choice
-        await self.funcs[self.last_chosen]
+        self.last_chosen
+        await self.funcs[self.last_chosen]()
+        if self.iteration == 0:
+            print(self.funcs[self.last_chosen])
+
 
 
 

@@ -7,13 +7,14 @@ import os
 import neat
 import visualize
 import sc2
-import sc2Gym
+from sc2Gym import sc2Gym
+import pickle
 
 def eval_genomes(genomes, config):
     gym = sc2Gym(genomes, config)
     results = gym.spending_game()
     for genome_id, genome in genomes:
-        genome.fitness = results[genome_id].fitness
+        genome.fitness = results[genome_id]
 
 
 def run(config_file):
@@ -33,6 +34,7 @@ def run(config_file):
 
     # Run for up to 300 generations.
     winner = p.run(eval_genomes, 100)
+    pickle.dump(winner, open( "save.p", "wb" ) )
 
     # Display the winning genome.
     print('\nBest genome:\n{!s}'.format(winner))
